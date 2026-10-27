@@ -7,3 +7,9 @@
 [submodule "packages/foundry/lib/solidity-bytes-utils"]
 	path = packages/foundry/lib/solidity-bytes-utils
 	url = https://github.com/gnsps/solidity-bytes-utils
+[submodule "packages/foundry/lib/chainlink-evm"]
+	path = packages/foundry/lib/chainlink-evm
+	url = https://github.com/smartcontractkit/chainlink-evm
+[submodule "packages/foundry/lib/openzeppelin-contracts-4.9.6"]
+	path = packages/foundry/lib/openzeppelin-contracts-4.9.6
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts

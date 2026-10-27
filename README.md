@@ -1,83 +1,87 @@
-# 🏗 Scaffold-ETH 2
+# Coin Flip
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+Two-player USDC coin flip on Ethereum Sepolia. Player 1 picks Heads or Tails and deposits 10 USDC; player 2 joins
+by game number, gets the other side and deposits 10 USDC. Joining requests a random number from Chainlink VRF v2.5,
+and the VRF callback pays the 20 USDC pot to the winner in the same transaction.
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+Built on [Scaffold-ETH 2](https://docs.scaffoldeth.io) (Foundry + Next.js + wagmi + RainbowKit).
 
-> [!NOTE]
-> 🤖 Scaffold-ETH 2 is AI-ready! It has everything agents need to build on Ethereum. Check `.agents/`, `.claude/`, `.opencode` or `.cursor/` for more info.
+## Layout
 
-⚙️ Built using NextJS, RainbowKit, Foundry, Wagmi, Viem, and Typescript.
+| Path | What |
+| --- | --- |
+| `packages/foundry/contracts/CoinFlip.sol` | The game contract |
+| `packages/foundry/contracts/mocks/` | `MockUSDC` and `LocalVRFCoordinator`, deployed on the local chain only |
+| `packages/foundry/test/` | Unit tests (Chainlink's official VRF mock) and a Sepolia fork test |
+| `packages/foundry/script/DeployCoinFlip.s.sol` | Deploy: real VRF + Circle USDC on Sepolia, mocks locally |
+| `packages/nextjs/app/page.tsx` | Start / join screen |
+| `packages/nextjs/app/game/[id]/page.tsx` | Game page: waiting, flipping, result, payout tx, cancel/refund/claim |
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+## Contract rules
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+- Buy-in is fixed at 10 USDC (`10e6`, 6 decimals). No house fee; the winner gets 20.
+- Game numbers are sequential from 1. You cannot join your own game.
+- `cancelGame`: player 1 gets their deposit back while nobody has joined.
+- `refundGame`: if VRF has not answered 1 hour after joining, anyone can refund both players. A late VRF answer is
+  then ignored.
+- If a payout transfer fails (e.g. USDC has blocked the winner's address), the game still settles and the amount is
+  credited to `claimable`; the winner withdraws it with `claim()`. The VRF callback never reverts, because Chainlink
+  does not retry failed callbacks.
+- Trust: the owner can change VRF settings and, through Chainlink's base contract, repoint the VRF coordinator, which
+  would let a dishonest owner choose outcomes. There is no function that lets the owner move escrowed USDC.
 
-## Requirements
+## Local development
 
-Before you begin, you need to install the following tools:
-
-- [Node (>= v20.18.3)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
-
-## Quickstart
-
-To get started with Scaffold-ETH 2, follow the steps below:
-
-1. Install dependencies if it was skipped in CLI:
-
-```
-cd my-dapp-example
+```bash
 yarn install
+yarn chain        # terminal 1: local anvil chain
+yarn deploy       # terminal 2: deploys CoinFlip + MockUSDC + LocalVRFCoordinator, regenerates frontend ABIs
+yarn start        # terminal 3: http://localhost:3000
 ```
 
-2. Run a local network in the first terminal:
+`scaffold.config.ts` must have `targetNetworks: [chains.foundry]` for local work. On the local chain the UI shows
+"Mint 100 test USDC" and, on a game that is flipping, "Answer flip (local VRF)" (local VRF requests are answered by
+hand). The Debug Contracts page is available locally only.
 
-```
-yarn chain
-```
+Tests:
 
-This command starts a local Ethereum network using Foundry. The network runs on your local machine and can be used for testing and development. You can customize the network configuration in `packages/foundry/foundry.toml`.
-
-3. On a second terminal, deploy the test contract:
-
-```
-yarn deploy
+```bash
+yarn foundry:test
+# Also run the fork test, which checks the VRF callback's gas with real Sepolia USDC (~108k of the 250k limit):
+SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com yarn foundry:test
 ```
 
-This command deploys a test smart contract to the local network. The contract is located in `packages/foundry/contracts` and can be modified to suit your needs. The `yarn deploy` command uses the deploy script located in `packages/foundry/script` to deploy the contract to the network. You can also customize the deploy script.
+## Deploying to Sepolia
 
-4. On a third terminal, start your NextJS app:
+You need: a deployer wallet with Sepolia ETH, and free accounts/keys from
+[Alchemy](https://dashboard.alchemy.com) (RPC), [Etherscan](https://etherscan.io/apis) (verification) and
+[Reown](https://dashboard.reown.com) (WalletConnect project ID).
 
-```
-yarn start
-```
+1. **Deployer key.** `yarn account:import` (paste the private key; it is stored encrypted in
+   `~/.foundry/keystores`) or `yarn generate` for a fresh one. `yarn account` shows its address and balance.
+2. **VRF subscription.** At [vrf.chain.link](https://vrf.chain.link) (Sepolia), connect the *same deployer wallet*,
+   create a subscription and fund it with Sepolia ETH. Budget about 0.004 ETH per flip at 10 gwei; 0.5 ETH is
+   comfortable for a workshop. Copy the subscription ID.
+3. **Foundry env.** In `packages/foundry/.env` set `ALCHEMY_API_KEY`, `ETHERSCAN_API_KEY` and
+   `VRF_SUBSCRIPTION_ID`.
+4. **Deploy and verify.**
+   ```bash
+   yarn deploy --network sepolia     # deploys CoinFlip and adds it as a consumer on your subscription
+   yarn verify --network sepolia
+   ```
+   Check the subscription page on vrf.chain.link lists the new contract as a consumer.
+5. **Point the frontend at Sepolia.** In `packages/nextjs/scaffold.config.ts` set
+   `targetNetworks: [chains.sepolia]`. `deployedContracts.ts` was regenerated by the deploy; commit it.
+6. **Smoke test** locally with `yarn start` and two wallets before the workshop.
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+## Hosting on Vercel
 
-Run smart contract test with `yarn foundry:test`
+1. Push the repo to GitHub.
+2. On [vercel.com](https://vercel.com), sign in with GitHub, *Add New → Project*, import the repo and set
+   **Root Directory** to `packages/nextjs`.
+3. Environment variables: `NEXT_PUBLIC_ALCHEMY_API_KEY` and `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` (your own, not
+   the Scaffold-ETH defaults, which are shared and rate-limited).
+4. Deploy. Every push to `main` redeploys. (Alternative from the CLI: `yarn vercel --prod`.)
 
-- Edit your smart contracts in `packages/foundry/contracts`
-- Edit your frontend homepage at `packages/nextjs/app/page.tsx`. For guidance on [routing](https://nextjs.org/docs/app/building-your-application/routing/defining-routes) and configuring [pages/layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) checkout the Next.js documentation.
-- Edit your deployment scripts in `packages/foundry/script`
-
-
-## Documentation
-
-Visit our [docs](https://docs.scaffoldeth.io) to learn how to start building with Scaffold-ETH 2.
-
-To know more about its features, check out our [website](https://scaffoldeth.io).
-
-## Contributing to Scaffold-ETH 2
-
-We welcome contributions to Scaffold-ETH 2!
-
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+After deploying, add the Vercel domain to the allowed origins of your Reown project and (optionally) restrict the
+Alchemy key to that domain.

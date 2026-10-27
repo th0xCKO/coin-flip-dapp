@@ -29,10 +29,13 @@ export const menuLinks: HeaderMenuLink[] = [
 
 export const HeaderMenuLinks = () => {
   const pathname = usePathname();
+  const { targetNetwork } = useTargetNetwork();
+  // Debug Contracts is a dev tool; keep it off the Sepolia site workshop players use.
+  const links = targetNetwork.id === hardhat.id ? menuLinks : menuLinks.filter(({ href }) => href !== "/debug");
 
   return (
     <>
-      {menuLinks.map(({ label, href, icon }) => {
+      {links.map(({ label, href, icon }) => {
         const isActive = pathname === href;
         return (
           <li key={href} className="h-full">
@@ -86,8 +89,8 @@ export const Header = () => {
             <Image alt="SE2 logo" className="cursor-pointer" fill src="/logo.svg" />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold leading-tight">Scaffold-ETH</span>
-            <span className="text-xs">Ethereum dev stack</span>
+            <span className="font-bold leading-tight">Coin Flip</span>
+            <span className="text-xs">10 USDC · winner takes all</span>
           </div>
         </Link>
         <ul className="hidden lg:flex lg:flex-nowrap h-full m-0 p-0 list-none">
