@@ -21,8 +21,9 @@ contract DeployCoinFlip is ScaffoldETHDeploy {
     // https://developers.circle.com/stablecoins/usdc-contract-addresses
     address constant SEPOLIA_USDC = 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238;
 
-    // Measured ~108k gas for the callback with real Sepolia USDC (test/CoinFlip.fork.t.sol).
-    uint32 constant CALLBACK_GAS_LIMIT = 250_000;
+    // The fork test measures ~108k for the callback, but with Foundry's gas schedule, which underprices Sepolia's
+    // storage creation (the callback writes one new slot). 500k leaves room; the owner can change it via setVrfConfig.
+    uint32 constant CALLBACK_GAS_LIMIT = 500_000;
     uint16 constant REQUEST_CONFIRMATIONS = 3;
     // Max gas price of the Sepolia key hash lane; Chainlink sizes the minimum subscription balance with it.
     uint256 constant SEPOLIA_LANE_MAX_GAS_PRICE = 500 gwei;
