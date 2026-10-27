@@ -50,7 +50,8 @@
     "verify": "yarn foundry:verify"
   },
   "resolutions": {
-    "@coinbase/cdp-sdk": "1.52.0"
+    "@coinbase/cdp-sdk": "1.52.0",
+    "cuer": "0.0.4"
   },
   "devDependencies": {
     "husky": "~9.1.6",

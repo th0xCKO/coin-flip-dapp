@@ -7774,9 +7774,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cuer@npm:0.0.3":
-  version: 0.0.3
-  resolution: "cuer@npm:0.0.3"
+"cuer@npm:0.0.4":
+  version: 0.0.4
+  resolution: "cuer@npm:0.0.4"
   dependencies:
     qr: "npm:~0"
   peerDependencies:
@@ -7786,7 +7786,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10/5566b3ccd8ab92e414b2048be324d9cf288a959e20eddcd561877bf5f139387c732037291c8841781a8bdb6529e0bd1b92704b7b1f73331cea8950a2ef9a304c
+  checksum: 10/f2a2c0f3cbda4576a1fa8cababffd1e4ea18e311769347e5fbefcbc592504df68c5ea169a0f007fdfa85eae87acc2fc12421234cbc9b3ef425b32d5405b8aab2
   languageName: node
   linkType: hard
 
