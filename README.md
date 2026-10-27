@@ -47,7 +47,7 @@ Tests:
 
 ```bash
 yarn foundry:test
-# Also run the fork test, which checks the VRF callback's gas with real Sepolia USDC (~108k by Foundry's gas schedule; the live limit is 500k because Sepolia prices new storage higher):
+# Also run the fork test, which checks the VRF callback's gas with real Sepolia USDC (~108k by Foundry's gas schedule, which underprices Sepolia's storage creation; measured on Sepolia itself it is ~271k, against the 500k limit):
 SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com yarn foundry:test
 ```
 
