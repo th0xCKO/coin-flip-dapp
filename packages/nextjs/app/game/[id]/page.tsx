@@ -7,6 +7,7 @@ import { Address } from "@scaffold-ui/components";
 import { useQuery } from "@tanstack/react-query";
 import type { NextPage } from "next";
 import { useAccount, useBlock, usePublicClient } from "wagmi";
+import { ClaimBanner } from "~~/components/coinflip/ClaimBanner";
 import { AnswerFlipButton } from "~~/components/coinflip/LocalDevActions";
 import { UsdcBalance } from "~~/components/coinflip/UsdcBalance";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
@@ -51,11 +52,6 @@ const GamePage: NextPage = () => {
     contractName: "CoinFlip",
     functionName: "getGame",
     args: [gameId],
-  });
-  const { data: claimable } = useScaffoldReadContract({
-    contractName: "CoinFlip",
-    functionName: "claimable",
-    args: [account],
   });
   const { writeContractAsync: writeCoinFlip, isMining } = useScaffoldWriteContract({ contractName: "CoinFlip" });
   const { hasBuyIn, ensureBuyInAllowance, refetch: refetchUsdc } = useUsdc();
@@ -119,6 +115,8 @@ const GamePage: NextPage = () => {
         <h1 className="text-3xl font-bold mb-1">Game #{gameId.toString()}</h1>
         <StatusBadge status={status!} />
       </div>
+
+      <ClaimBanner />
 
       <Coin
         face={status === GameStatus.Settled ? sideLabel(game.result) : undefined}
@@ -233,19 +231,6 @@ const GamePage: NextPage = () => {
             <p className="m-0 text-center">
               Chainlink didn&apos;t answer within an hour, so both players were refunded.
             </p>
-          )}
-
-          {claimable !== undefined && claimable > 0n && (
-            <div className="alert alert-info flex justify-between">
-              <span>You have {formatUsdc(claimable)} USDC waiting to be claimed.</span>
-              <button
-                className="btn btn-sm"
-                disabled={isMining}
-                onClick={() => run(() => writeCoinFlip({ functionName: "claim" }))}
-              >
-                Claim
-              </button>
-            </div>
           )}
         </div>
       </div>

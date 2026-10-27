@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { NextPage } from "next";
 import { parseEventLogs } from "viem";
 import { useAccount } from "wagmi";
+import { ClaimBanner } from "~~/components/coinflip/ClaimBanner";
 import { UsdcBalance } from "~~/components/coinflip/UsdcBalance";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useDeployedContractInfo, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
@@ -61,6 +62,7 @@ const Home: NextPage = () => {
       ) : (
         <>
           <UsdcBalance />
+          <ClaimBanner />
 
           <div className="grid gap-6 md:grid-cols-2 w-full max-w-3xl">
             <div className="card bg-base-100 shadow-xl">

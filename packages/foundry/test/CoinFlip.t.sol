@@ -220,6 +220,34 @@ contract CoinFlipTest is Test {
         flip.rawFulfillRandomWords(requestId, words);
     }
 
+    function test_Settle_UnknownRequestIdIsIgnoredWithoutReverting() public {
+        uint256 id = _create(alice, CoinFlip.Side.Heads);
+        uint256 requestId = _join(bob, id);
+        uint256[] memory words = new uint256[](1);
+
+        vm.prank(address(coordinator));
+        flip.rawFulfillRandomWords(requestId + 1, words); // must not revert: the coordinator never retries
+
+        CoinFlip.Game memory g = flip.getGame(id);
+        assertEq(uint8(g.status), uint8(CoinFlip.Status.Flipping));
+        assertEq(usdc.balanceOf(address(flip)), 2 * BUY_IN);
+    }
+
+    function test_Settle_SecondAnswerForSameRequestIsIgnored() public {
+        uint256 id = _create(alice, CoinFlip.Side.Heads);
+        uint256 requestId = _join(bob, id);
+        _fulfill(requestId, 0); // Heads -> alice
+
+        uint256[] memory words = new uint256[](1);
+        words[0] = 1; // would be Tails -> bob
+        vm.prank(address(coordinator));
+        flip.rawFulfillRandomWords(requestId, words);
+
+        assertEq(flip.getGame(id).winner, alice);
+        assertEq(usdc.balanceOf(alice), 110e6);
+        assertEq(usdc.balanceOf(bob), 90e6);
+    }
+
     // ---------------------------------------------------------------- payout failure
 
     function test_Settle_BlockedWinnerIsCreditedAndCanClaimLater() public {

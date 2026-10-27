@@ -24,6 +24,23 @@ contract DeployCoinFlip is ScaffoldETHDeploy {
     // Measured ~108k gas for the callback with real Sepolia USDC (test/CoinFlip.fork.t.sol).
     uint32 constant CALLBACK_GAS_LIMIT = 250_000;
     uint16 constant REQUEST_CONFIRMATIONS = 3;
+    // Max gas price of the Sepolia key hash lane; Chainlink sizes the minimum subscription balance with it.
+    uint256 constant SEPOLIA_LANE_MAX_GAS_PRICE = 500 gwei;
+    uint256 constant VRF_VERIFICATION_GAS = 200_000;
+    uint256 constant NATIVE_PREMIUM_PERCENT = 24;
+
+    /// @dev The coordinator accepts requests regardless of balance, but Chainlink leaves them pending (up to 24h)
+    ///      while the subscription holds less than the worst-case request cost. Warn rather than fail the deploy.
+    function _warnIfSubscriptionUnderfunded(uint256 subId) internal view {
+        (, uint96 nativeBalance,,,) = IVRFSubscriptionV2Plus(SEPOLIA_VRF_COORDINATOR).getSubscription(subId);
+        uint256 minBalance = SEPOLIA_LANE_MAX_GAS_PRICE * (VRF_VERIFICATION_GAS + CALLBACK_GAS_LIMIT)
+            * (100 + NATIVE_PREMIUM_PERCENT) / 100;
+        if (nativeBalance < minBalance) {
+            console.log("WARNING: VRF subscription native balance (wei):", nativeBalance);
+            console.log("         is below Chainlink's minimum for this request (wei):", minBalance);
+            console.log("         Flips will stay pending until the subscription is topped up at vrf.chain.link.");
+        }
+    }
 
     function run() external ScaffoldEthDeployerRunner {
         if (block.chainid == 11155111) {
@@ -39,6 +56,7 @@ contract DeployCoinFlip is ScaffoldETHDeploy {
             );
             IVRFSubscriptionV2Plus(SEPOLIA_VRF_COORDINATOR).addConsumer(subId, address(flip));
             console.log("CoinFlip deployed and added to VRF subscription:", address(flip));
+            _warnIfSubscriptionUnderfunded(subId);
         } else if (block.chainid == 31337) {
             LocalVRFCoordinator coordinator = new LocalVRFCoordinator();
             MockUSDC usdc = new MockUSDC();

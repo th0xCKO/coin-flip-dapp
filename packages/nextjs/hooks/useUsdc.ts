@@ -25,7 +25,8 @@ export const useUsdc = () => {
     abi: erc20Abi,
     functionName: "allowance",
     args: account && coinFlip ? [account, coinFlip.address] : undefined,
-    query: { enabled },
+    // Polled too, so an allowance spent elsewhere (another tab) is noticed before we skip the approve step.
+    query: { enabled, refetchInterval: 4000 },
   });
 
   const { writeContractAsync } = useWriteContract();
@@ -39,7 +40,8 @@ export const useUsdc = () => {
     if (!usdcAddress || !coinFlip) return false;
     if ((allowance ?? 0n) >= BUY_IN) return true;
     try {
-      await transact(() =>
+      // useTransactor returns undefined without throwing when no wallet client is available.
+      const hash = await transact(() =>
         writeContractAsync({
           address: usdcAddress,
           abi: erc20Abi,
@@ -47,7 +49,7 @@ export const useUsdc = () => {
           args: [coinFlip.address, BUY_IN],
         }),
       );
-      return true;
+      return hash !== undefined;
     } catch {
       return false;
     } finally {
