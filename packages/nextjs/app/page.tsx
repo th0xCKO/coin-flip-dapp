@@ -49,10 +49,36 @@ const Home: NextPage = () => {
 
   return (
     <div className="flex flex-col items-center grow pt-10 px-4 gap-8">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-2">Coin Flip</h1>
-        <p className="m-0 opacity-80">Two players, 10 USDC each. Chainlink VRF flips the coin; the winner takes 20.</p>
+      <div className="text-center max-w-2xl">
+        <h1 className="text-4xl font-bold mb-4">Coin Flip: Escrow Edition 🪙</h1>
+        <p className="text-xl font-semibold m-0 mb-2">Welcome, Crypto &amp; iGaming team!</p>
+        <p className="m-0 opacity-80">
+          Tomer built this little game to show on-chain escrow in action: a simple smart contract holds the money and
+          settles it by rules written in code, with no middleman.
+        </p>
       </div>
+
+      <ul className="card bg-base-100 shadow-xl p-6 m-0 w-full max-w-2xl flex flex-col gap-3 list-none">
+        <li>
+          <strong className="mr-1">🔒 Lock it:</strong>you and an opponent each put 10 USDC into the contract. Once
+          it&apos;s in, nobody can withdraw it mid-game, not even Tomer.
+        </li>
+        <li>
+          <strong className="mr-1">🎲 Flip it:</strong>Chainlink&apos;s verifiable randomness tosses the coin. No one
+          can rig it, and no one can peek.
+        </li>
+        <li>
+          <strong className="mr-1">💸 Settle it:</strong>the contract pays the full 20 USDC to the winner automatically.
+          Settlement T+1 minute, no reconciliation, and chargebacks aren&apos;t a thing here.
+        </li>
+        <li>
+          <strong className="mr-1">🛟 Safety net:</strong>if the flip never arrives, both players get their money back
+          after an hour.
+        </li>
+        <li className="text-sm italic opacity-70 text-center pt-1">
+          Testnet USDC only: the money&apos;s fake, the bragging rights are real.
+        </li>
+      </ul>
 
       {!isConnected ? (
         <div className="card bg-base-100 shadow-xl p-6 items-center gap-3">
