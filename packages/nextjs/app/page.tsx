@@ -53,7 +53,7 @@ const Home: NextPage = () => {
         <h1 className="text-4xl font-bold mb-4">Coin Flip: Escrow Edition 🪙</h1>
         <p className="text-xl font-semibold m-0 mb-2">Welcome, Crypto &amp; iGaming team!</p>
         <p className="m-0 opacity-80">
-          Tomer built this little game to show on-chain escrow in action: a simple smart contract holds the money and
+          Tomer and Claude built this little game to show on-chain escrow in action: a simple smart contract holds the money and
           settles it by rules written in code, with no middleman.
         </p>
       </div>
